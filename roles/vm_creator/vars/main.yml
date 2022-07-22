@@ -1,0 +1,10 @@
+---
+# vars file for vm_creator
+
+template_file: "{%- if node_type == 'master' -%}
+                  master_node_config.yml.j2
+                {%- elif node_type == 'worker' -%}
+                  worker_node_config.yml.j2
+                {%- elif node_type == 'loadbalancer' -%}
+                  loadbalancer_node_config.yml.j2
+                {%- endif -%}"

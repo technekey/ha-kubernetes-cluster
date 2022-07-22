@@ -1,0 +1,23 @@
+---
+# tasks file for collect_recent_cluster_info
+  - name: "Capture the Current Status of the VM"
+    community.libvirt.virt:
+      command: list_vms
+    register: all_vms
+
+  - name: "Get IP to Hostnamt Mapping"
+    script: "get_hostname_ip.sh {{ item }}"
+    loop: "{{ all_vms.list_vms|list }}"
+    register: ip_host_map
+ 
+  - name: "Save the Hostname and IP of the exiting nodes in the cluster"
+    set_fact: 
+      all_nodes_running: "{%for item in  ip_host_map.results|list | map(attribute='stdout') |select() %}{{ item }} {%endfor%}"
+      controller_address: "{% for item in  ip_host_map.results|list | map(attribute='stdout') |select('match','.*' + master_prefix + '.*')%}{{item}} {%endfor%}"
+      worker_address: "{% for item in ip_host_map.results|list | map(attribute='stdout') |select('match','.*' + worker_prefix + '.*')%}{{item}} {%endfor%}"
+      loadbalancer_address: "{% for item in  ip_host_map.results|list | map(attribute='stdout') |select('match','.*' + loadbalancer_prefix + '.*')%}{{item}} {%endfor%}"
+
+  - debug: var=all_nodes_running
+  - debug: var=controller_address
+  - debug: var=worker_address
+  - debug: var=loadbalancer_address

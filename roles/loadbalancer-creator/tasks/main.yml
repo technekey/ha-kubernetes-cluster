@@ -1,0 +1,25 @@
+---
+# tasks file for loadbalancer-creator
+
+  - name: "Gather Latest Controller state"
+    include_role:
+      name: collect_recent_cluster_info
+    when: ha_enable |bool
+
+  - name: "Start Loadbalancer Node creation, desired loadbalancer count{{':'}} {{ number_of_loadbalancer }}"
+    include_role:
+      name: main_wrapper_vm_creator
+    vars:
+      prefix:       "{{ cluster_name }}-{{ loadbalancer_prefix }}"
+      memory_mb:    "{{ loadbalancer_memory }}"
+      vcpus:        "{{ loadbalancer_vcpu }}"
+      disk_size:    "{{ loadbalancer_disk }}"
+      os_variant:   "{{ loadbalancer_os_variant }}"
+      image_source: "{{ loadbalancer_image_source }}"
+      vm_name:      "{{ prefix + '-' + outer_item }}"
+      node_type:    "loadbalancer"
+    loop: "{{ query('sequence', 'start=1 end=' + (number_of_loadbalancer|string)) }}"
+    loop_control:
+      loop_var: outer_item
+    when: ha_enable |bool
+

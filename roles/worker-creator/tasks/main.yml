@@ -1,0 +1,19 @@
+---
+# tasks file for worker-creator
+
+  - name: "Start Worker node creation, desired worker count{{':'}} {{ number_of_worker }}"
+    include_role:
+      name: main_wrapper_vm_creator
+    vars:
+      prefix:       "{{ cluster_name }}-{{ worker_prefix }}"
+      memory_mb:    "{{ worker_memory }}"
+      vcpus:        "{{ worker_vcpu }}"
+      disk_size:    "{{ worker_disk }}"
+      os_variant:   "{{ worker_os_variant }}"
+      image_source: "{{ worker_image_source }}"
+      vm_name:      "{{ prefix + '-' + outer_item }}"
+      node_type:    "worker"
+    loop: "{{ query('sequence', 'start=1 end=' + (number_of_worker|string)) }}"
+    loop_control:
+      loop_var: outer_item
+

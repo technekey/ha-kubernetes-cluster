@@ -1,0 +1,37 @@
+---
+# tasks file for main_wrapper_vm_creator
+
+  - name: "List the Existing KVM present on the host machine"
+    community.libvirt.virt:
+      command: list_vms
+    register: all_vms
+
+  - debug: var=all_vms.list_vms
+
+  - name: "Check if the user requested VM is already present in the Host"
+    set_fact:
+      vm_running: "{% if vm_name in all_vms.list_vms %}True{%else%}False{%endif%}"
+
+  - name: "Display the presence of the vm({{vm_name}})in the cluster"
+    debug:
+      msg: >
+          "{% if vm_name in all_vms %}
+             {{vm_name}} is already present in the cluster. Skipping with VM creation.
+           {%else%}
+             {{vm_name}} is not present in the cluster. Continuing the VM creation.
+           {%endif%}"
+
+  - name: "Calling VM-Creator role for {{ vm_name }}"
+    include_role:
+      name: vm_creator
+    when:  not vm_running
+
+  - name: "Check for cloud-init completion for {{ vm_name }}"
+    include_role:
+      name: cloud_init_check
+    when: not vm_running
+
+  - name: "Set autostart disable for the VM for {{ vm_name }}"
+    include_role:
+      name: disable_autostart_vm
+    when: not vm_running

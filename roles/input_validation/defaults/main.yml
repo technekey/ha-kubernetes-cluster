@@ -1,0 +1,53 @@
+---
+# defaults file for input_validation
+
+required_vars:
+- cluster_name
+- number_of_master
+- master_prefix
+- master_memory
+- master_vcpu
+- master_disk
+- master_os_variant
+- master_image_source
+- number_of_worker
+- worker_prefix
+- worker_memory
+- worker_vcpu
+- worker_disk
+- worker_os_variant
+- worker_image_source
+- number_of_loadbalancer
+- loadbalancer_prefix
+- loadbalancer_memory
+- loadbalancer_vcpu
+- loadbalancer_disk
+- loadbalancer_os_variant
+- loadbalancer_image_source
+- ha_enable
+- ha_loadbalancer_vip
+- ha_loadbalancer_port
+- ha_lb_port
+- ha_keepalive_master_priority
+- ha_lb_interface
+- kubespray_dir
+- wait_for_cloud_init
+- required_directories
+- required_parameters
+- required_binaries
+- image_cache
+- vm_disk_storage
+- network_to_use
+- cloud_init_result_max_retries
+- cloud_init_result_delay
+- cloud_init_complete_max_retries
+- cloud_init_complete_delay
+- ip_assignment_retry
+- ip_assignment_delay
+- wait_for_ip_assignment
+- default_username
+- default_password
+- default_timezone
+- log_ip
+- ip_dir
+

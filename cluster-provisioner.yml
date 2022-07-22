@@ -1,0 +1,41 @@
+- name: Deploy VM using Cloud-init 
+  hosts: localhost
+  gather_facts: yes
+  become: yes   
+  tasks:
+  - name: "Validate the hostvars"
+    block:
+    - name: "Perform Input parameter validation"
+      include_role:
+        name: input_validation
+
+    rescue:
+    - name: "Show help and Syntax"
+      include_role:
+        name: error_and_help
+
+  - name: "sss"
+    include_role:
+      name: ssh_key_setup
+    when: auto_public_key_path is defined
+
+  - name: "Collect the current Status of the cluster"
+    include_role:
+      name: collect_recent_cluster_info
+
+  - name: "Create Controller nodes"
+    include_role:
+      name: controller-creator
+
+  - name: "Create Worker nodes"
+    include_role:
+      name: worker-creator
+
+  - name: "Create Loadbalancer nodes"
+    include_role:
+      name: loadbalancer-creator
+
+  - name: "Start Kubespray provisioning"
+    include_role: 
+      name: kubespray_configuration
+

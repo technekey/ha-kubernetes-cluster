@@ -1,0 +1,56 @@
+- name: "Play for cluster start"
+  hosts: localhost
+  gather_facts: yes
+  become: yes
+  vars_prompt:
+  - name: "user_response_cluster_start"
+    prompt: "Do you want to start the cluster (yes/no)?"
+    private: no
+
+  tasks:
+  - name: "Validate User response"
+    assert:
+      that:
+      - user_response_cluster_start is defined
+      - user_response_cluster_start|regex_search('(?i)^yes$|^no$')
+
+      fail_msg: "Invalid User response, you must type 'yes' or 'no'"
+      success_msg: "User response validation passed"
+
+  - meta: end_play
+    when: user_response_cluster_start | regex_search('^no$')
+
+  - name: "Validating Cluster name is provided"
+    assert: 
+      that: cluster_to_start is defined
+      fail_msg: "You must set 'cluster_to_start' as input via extra-args to the name of the cluster marked for start."
+      success_msg: "Cluster name is provided, validation passed"
+  
+  - name: "List the Existing KVM present on the host machine"
+    community.libvirt.virt:
+      command: list_vms
+    register: all_vms
+
+  - debug: 
+      msg: "{{ all_vms.list_vms |select('search','^' + cluster_to_start + '-.*') }}"
+
+  - name: "Display the info of the VM"
+    community.libvirt.virt:
+      command: "info"
+      name: "{{ item }}"
+    loop: "{{ all_vms.list_vms |select('search','^' + cluster_to_start + '-.*') }}"
+    register: vm_info
+
+  - debug:
+      msg: "{{ vm_info }}"
+
+  - name: "Starting the VM"
+    community.libvirt.virt:
+      command: "start"
+      name: "{{ item }}"
+    loop: "{{ all_vms.list_vms |select('search','^' + cluster_to_start + '-.*') }}"
+    register: vm_start
+
+  - debug:
+      msg: "{{ vm_start }}"
+

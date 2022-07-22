@@ -1,0 +1,61 @@
+---
+# tasks file for input_validation
+  - name: "Ensure the dependencies are present on the host"
+    package:
+      name:
+        - guestfs-tools
+        - python3-libvirt
+      state: present
+
+  - name: validate some variables
+    fail:
+      msg: "Required variable {{item}} has not been provided"
+    when: vars[item] is undefined
+    loop: "{{ required_vars }}"
+
+  - name: "Loading the path of all required binaries in the ansible host"
+    ansible.builtin.shell: "which {{ item }} || :"
+    register: bin_path
+    loop: "{{ required_binaries }}"
+    failed_when: bin_path.stdout_lines |length == 0
+
+  - name: "Validating the network mode"
+    assert:
+      that: network_to_use |regex_search('^default$|^bridged$')
+      fail_msg: "Unsupported network mode. Playbook only supports default or bridged mode"
+      success_msg: "Network mode validated."
+
+  - name: "SSH KEY Configuration in the host var file"
+    assert:
+      that: "{{ item }}"
+      fail_msg: auto_public_key_path and public_key_for_all_nodes cannot be defined together"
+      success_msg: "SSH KEY Validation passed"
+    vars:
+      conditions:
+      - not ((auto_public_key_path is defined) and (public_key_for_all_nodes is defined))
+      - ((auto_public_key_path is defined) or (public_key_for_all_nodes is defined)) 
+    loop: "{{ conditions }}"
+  - name: "Check High-Availibility Configuration for Number of Masters"
+    assert:
+      that: 
+      - number_of_master >= 2
+      fail_msg: "Invalid Configuration, 'ha_enable' is set to True, then number_of_master must be higher that 2"
+      success_msg: "Number of Masters are satisfying the HA settings"
+    when: ha_enable
+
+  - name: "Check High-Availibility Configuration for Number of Loadbalancers"
+    assert:
+      that:
+      - number_of_loadbalancer >= 2
+      fail_msg: "Invalid Configuration,  'ha_enable' is set to True, then number_of_loadbalancer must be higher that 2"
+      success_msg: "Number of Loadbalancers are satisfying the HA settings"
+
+  - name: "Check the number of ETCD Nodes for ODD Numbers"
+    debug:
+      msg: >
+          "{% if number_of_master %2 == 0 %}
+             [WARNING] The number of masters is in even numbers, ETCD must be installed on odd numbers of nodes,
+             ETCD will be additionally configured on 1 worker node to keep the ETCD node to Odd numbers.
+           {% else %}
+             The number of masters is in odd number, procceding with this configuration.
+           {%endif%}"

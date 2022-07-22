@@ -1,0 +1,180 @@
+###########################################################################################################
+##
+## Default values for the playbook execution
+##
+###########################################################################################################
+
+# The name of the cluster, Eg: dev, prod etc.
+cluster_name: "development"
+
+
+####
+## Note: If the image for an OS-variant is already present, playbook won't download the image even from
+##       a newer url. 
+###########################################################################################################
+##
+## Configuration for the KUBE MASTER NODE
+##
+###########################################################################################################
+number_of_master: 2
+master_prefix: "kube-controller"
+master_memory: "2048"
+master_vcpu: 2
+master_disk: 40G
+master_os_variant: ubuntu22.04
+master_image_source: https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
+
+###########################################################################################################
+##
+## Configuration for KUBE WORKER NODE
+##
+###########################################################################################################
+number_of_worker: 3
+worker_prefix: "kube-worker"
+worker_memory: "2048"
+worker_vcpu: 2
+worker_disk: 40G
+worker_os_variant: ubuntu22.04
+worker_image_source: https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
+
+
+###########################################################################################################
+##
+## Configuration for load balancer node
+##
+###########################################################################################################
+number_of_loadbalancer: 2
+loadbalancer_prefix: "kube-loadbalancer"
+loadbalancer_memory: "512"
+loadbalancer_vcpu: 1
+loadbalancer_disk: 40G
+loadbalancer_os_variant: ubuntu22.04
+loadbalancer_image_source: https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
+
+###########################################################################################################
+##
+## Configuration for HA
+##
+###########################################################################################################
+ha_enable: True
+ha_loadbalancer_vip: 192.168.122.211
+ha_loadbalancer_port: 8443
+ha_lb_port: 6443
+ha_keepalive_master_priority: 255
+
+ha_lb_interface: enp1s0   #<---hint "ip route get 1.1.1.1  |grep -oP 'dev\s+\K[^ ]+'" command to get the name
+
+##############################################################################################################
+##
+## User Public key that will be added to the VM's authorized key, you can either define your own public key
+## or, let the ansible set it for you. 
+## #public_key_for_all_nodes: Put your own key here
+##
+##       OR
+## auto_public_key_path: The path where ssh key should be generated. You should perhaps don't touch this.
+## Make sure not to set both at once. 
+##############################################################################################################
+
+#public_key_for_all_nodes: "{{ playbook_dir }}/{{ cluster_name }}/id_ssh_rsa"
+
+#add key here if you want to use pre-existing key, make sure to comment auto_public_key_path
+#public_key_for_all_nodes: "<add your ssh key>"
+
+auto_public_key_path: "{{ playbook_dir }}/{{ cluster_name }}"
+
+#############################################################################################################
+##
+## Location to store the images and disk file
+##
+##############################################################################################################
+
+# we will download images at the following location, use the directory with enough disk space
+image_cache: "/var/lib/vm_images"
+
+# Keep the disk of the VM at the following location, note that if the directory is deleted VM will be lost.
+vm_disk_storage: "/var/lib/libvert_vm"
+
+
+##############################################################################################################
+##
+## Colud-init configuration, do we want for al the instructions in the cloud-init file to complete ?
+## Default: False, to save time
+##############################################################################################################
+wait_for_cloud_init: False
+
+#by default using default network
+#supported values: default, bridged
+#NOTE: bridge mode assumes, your system is setup to run VM in bridged network. (playbook would not setup the network, if not already set results may varies)
+#playbook is tested for the most run on default network, so YMMV with bridged network. Consider using only default. This flag is prehaps only for internal use. 
+network_to_use: default
+
+#check for the result.json every 10 seconds 90 times
+cloud_init_result_max_retries: 90
+cloud_init_result_delay: 10
+
+#check every 10 seconds for 90 times for cloud-init completion
+cloud_init_complete_max_retries: 90
+cloud_init_complete_delay: 10
+
+#check ip address assignment
+ip_assignment_retry: 90
+ip_assignment_delay: 5
+wait_for_ip_assignment: True
+
+
+#following values will only be used if user did not supply the cloud init file as input
+# this is going to be one time initial password
+default_username: "technekey"
+default_password: "technekey"
+
+
+#default timezone
+default_timezone: "US/Chicago"
+
+
+# log the IP of the created vm in a file
+log_ip: False
+ip_dir: "{{ playbook_dir }}/ip"
+
+
+######################################################################################################################
+##
+## Configuration for kubespray
+##
+######################################################################################################################
+kubespray_dir: "{{ playbook_dir }}/{{ cluster_name }}/kubespray"
+kubespray_ansible_ssh_common_args: 'ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"'
+
+
+
+
+
+########################################################################################################################
+##
+## host minimum requirements to make playbook run, do not change.
+##
+########################################################################################################################
+
+required_directories:
+- "{{ image_cache }}"
+- "{{ vm_disk_storage }}"
+- "{{ vm_disk_storage }}/{{ vm_name }}"
+
+#following are mandatory parms to be set at the start of playbook execution
+required_parameters:
+- vm_name
+- vcpus
+- memory_mb
+- disk_size
+- image_soruce
+#note: supplying cloud-init file is optional, the playbook would rander it's own file
+
+#following binaries are required on the controller machine
+required_binaries:
+- virt-install
+- virsh
+- virt-ls
+- virt-cat
+- qemu-img
+- cloud-localds
+

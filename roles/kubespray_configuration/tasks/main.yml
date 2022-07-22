@@ -1,0 +1,108 @@
+---
+# tasks file for kubespray_configuration
+
+  - name: "Collect the current Status of the cluster"
+    include_role:
+      name: collect_recent_cluster_info
+
+  - name: "Prepare list of all the nodes IP,Hostname"
+    set_fact:
+      controller_address_list: "{{ controller_address.split(' ')|select() }}"
+      worker_address_list: "{{ worker_address.split(' ')|select() }}"
+
+  - name: "Ensure old copy of kubespray repo is not present"
+    file:
+      state: absent
+      path: "{{ kubespray_dir }}"
+    become: yes
+
+  - name: "Make Current directory safe to clone the kubespray"
+    shell: "git config --global --add safe.directory {{ playbook_dir }}"
+
+  - name: "Start working on Kupespray"
+    ansible.builtin.git:
+      repo: https://github.com/kubernetes-sigs/kubespray.git
+      dest: "{{ kubespray_dir }}"
+      clone: yes
+      update: yes
+      force: yes
+    become: false
+
+  - name: "Install specified python requirements for kubespray"
+    ansible.builtin.pip:
+      requirements: "{{ kubespray_dir }}/requirements.txt"
+
+  - name: "Copy the inventory template"
+    shell: "cp -rfp {{ kubespray_dir }}/inventory/sample {{ kubespray_dir }}/inventory/{{ cluster_name }}"
+
+  - name: "Generate the Inventory file"
+    copy:
+      content: "{{ lookup('template', 'inventory.j2') }}"
+      dest:    "{{ kubespray_dir }}/inventory/{{ cluster_name }}/hosts.yaml"
+
+  - name: "Rename the cluster name"
+    ansible.builtin.lineinfile:
+      path: "{{ kubespray_dir }}/inventory/{{ cluster_name }}/group_vars/k8s_cluster/k8s-cluster.yml"
+      regexp: '^(cluster_name).*'
+      line: \g<1>{{':'}} {{ cluster_name }}.local 
+      backrefs: yes
+
+  - name: "Setup the loadbalancer IP and port configuration in Kubespray"
+    ansible.builtin.blockinfile:
+      path: "{{ kubespray_dir }}/inventory/{{ cluster_name }}/group_vars/all/all.yml"
+      marker: "#<!-- {mark} ANSIBLE MANAGED BLOCK -->"
+      insertafter: "External LB example config"
+      block: |
+        loadbalancer_apiserver:
+          address: "{{ ha_loadbalancer_vip }}"
+          port: "{{ ha_loadbalancer_port }}"
+    when: ha_enable |bool
+
+  - name: "Add Supplementary entry for VIP for Kubernetes Certificate"
+    ansible.builtin.lineinfile:
+      path: "{{ kubespray_dir }}/inventory/{{ cluster_name }}/group_vars/k8s_cluster/k8s-cluster.yml" 
+      regexp: '^(# +)(supplementary_addresses_in_ssl_keys.*?)(.)$'
+      line: \g<2>, {{ ha_loadbalancer_vip }} \g<3>
+      backrefs: yes
+    when: ha_enable |bool
+
+  - name: "Enable local saving of KUBECONFIG for admin user"
+    ansible.builtin.lineinfile:
+      path: "{{ kubespray_dir }}/inventory/{{ cluster_name }}/group_vars/k8s_cluster/k8s-cluster.yml"
+      regexp: '^(# +)(kubeconfig_localhost{{":"}})(.*)$'
+      line:  \g<2> true
+      backrefs: yes
+
+  - name: "Enable Audit logs"
+    ansible.builtin.lineinfile:
+      path: "{{ kubespray_dir }}/inventory/{{ cluster_name }}/group_vars/k8s_cluster/k8s-cluster.yml"
+      regexp: '^(# +)(kubernetes_audit{{":"}})(.*)$'
+      line:  \g<2> true
+      backrefs: yes
+
+  - name: "Enable Kubernetes Dashboard"
+    ansible.builtin.lineinfile:
+      path: "{{ kubespray_dir }}/inventory/{{ cluster_name }}/group_vars/k8s_cluster/addons.yml"
+      regexp: '^(# +)(dashboard_enabled{{":"}})(.*)$'
+      line:  \g<2> true
+      backrefs: yes
+
+  - name: "Enable helm" 
+    ansible.builtin.lineinfile:
+      path: "{{ kubespray_dir }}/inventory/{{ cluster_name }}/group_vars/k8s_cluster/addons.yml"
+      regexp: '^(helm_enabled{{":"}})(.*)$'
+      line:  \g<1> true
+      backrefs: yes
+
+  - name: "Enable Metrics server"
+    ansible.builtin.lineinfile:
+      path: "{{ kubespray_dir }}/inventory/{{ cluster_name }}/group_vars/k8s_cluster/addons.yml"
+      regexp: '^(metrics_server_enabled{{":"}})(.*)$'
+      line:  \g<1> true
+      backrefs: yes
+
+  - name: "Configure Metrics server"
+    ansible.builtin.replace:
+      path: "{{ kubespray_dir }}/inventory/{{ cluster_name }}/group_vars/k8s_cluster/addons.yml"
+      regexp: '^(# )(metrics_server.*)'
+      replace: '\2'

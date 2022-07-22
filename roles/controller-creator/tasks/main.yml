@@ -1,0 +1,19 @@
+---
+# tasks file for controller-creator
+
+  - name: "Start Controller node creation, desired master count{{':'}} {{ number_of_master }}"
+    include_role:
+      name: main_wrapper_vm_creator
+    vars:
+      prefix:       "{{ cluster_name }}-{{ master_prefix }}"
+      memory_mb:    "{{ master_memory }}"
+      vcpus:        "{{ master_vcpu }}"
+      disk_size:    "{{ master_disk }}"
+      os_variant:   "{{ master_os_variant }}"
+      image_source: "{{ master_image_source }}"
+      vm_name:      "{{ prefix + '-' + outer_item }}"
+      node_type:    "master"
+    loop: "{{ query('sequence', 'start=1 end=' + (number_of_master|string)) }}"
+    loop_control:
+      loop_var: outer_item
+

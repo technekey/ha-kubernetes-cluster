@@ -1,0 +1,58 @@
+#jinja2:lstrip_blocks: True
+all:
+  vars:
+    {{ kubespray_ansible_ssh_common_args }}
+    ansible_user: {{ default_username }}
+    {%if auto_public_key_path is defined%}
+    ansible_ssh_private_key_file: {{ auto_public_key_path }}/id_ssh_rsa
+    {%endif%}
+  hosts:
+  {% for controller in controller_address_list %}
+    {% set hosts = controller.split(',') %}
+    {{ hosts[0] }}:
+      ansible_host: {{ hosts[1] }}
+      ip: {{ hosts[1] }}
+      access_ip: {{ hosts[1] }}
+  {% endfor%}
+  {% for worker in worker_address_list %}
+    {% set hosts = worker.split(',') %}
+    {{ hosts[0] }}:
+      ansible_host: {{ hosts[1] }}
+      ip: {{ hosts[1] }}
+      access_ip: {{ hosts[1] }}
+  {% endfor%}
+  children:
+    kube_control_plane:
+      hosts:
+      {% for controller in controller_address_list %}
+        {% set hosts = controller.split(',') %}
+        {{ hosts[0] }}:
+      {% endfor%}
+    kube_node:
+      hosts:
+      {% for worker in worker_address_list %}
+        {% set hosts = worker.split(',') %}
+        {{ hosts[0] }}:
+      {% endfor%}
+    etcd:
+      hosts:
+      {% set ns = namespace(found=false) %}
+      {% for controller in controller_address_list %}
+      {% set hosts = controller.split(',') %}
+      {% if controller_address_list |length %2 == 0 %}
+        {{ hosts[0] }}:
+        {% set ns.found = True %}
+      {% else %}
+        {{ hosts[0] }}:
+      {%endif%}
+      {% endfor%}
+      {% if ns.found == True %}
+        {{ worker_address_list|first|split(',')|first }}:
+      {% endif %}
+    k8s_cluster:
+      children:
+        kube_control_plane:
+        kube_node:
+    calico_rr:
+      hosts: {}
+

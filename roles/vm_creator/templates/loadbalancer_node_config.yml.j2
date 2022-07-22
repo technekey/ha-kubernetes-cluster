@@ -1,0 +1,136 @@
+#jinja2: trim_blocks:False
+#cloud-config
+
+# This file contains the default cloud-init file with basic info
+# you can modify this file as per you need. 
+
+system_info:
+  default_user:
+    name: "{{ default_username }}"                   #same user as of guest machine
+    home: "/home/{{ default_username }}"             # Same user as of guest machine
+    sudo: ALL=(ALL) NOPASSWD:ALL                     # Give sudo permission with no password prompt
+password: "{{ default_password }}"
+chpasswd: { expire: False }                           #This would cause the password to be reset during the first login
+hostname: "{{ vm_name }}"
+timezone: "{{ default_timezone }}"
+
+
+ssh_authorized_keys:
+- "{{ public_key_for_all_nodes }}"
+
+# configure sshd to allow users logging in using password
+# rather than just keys
+ssh_pwauth: True
+
+
+# list of packages to install
+package_upgrade: true
+packages:
+- keepalived
+- haproxy
+
+write_files:
+- path: /etc/keepalived/keepalived.conf
+  owner: root:root
+  permissions: '0644'
+  content: |
+    global_defs {
+    router_id LVS_DEVEL
+    script_user root
+    enable_script_security
+    }
+    vrrp_script check_apiserver {
+      script "/etc/keepalived/check_apiserver.sh"
+      interval 3
+      weight -2
+      fall 10
+      rise 2
+    }
+    
+    vrrp_instance VI_1 {
+        state {% if outer_item|int == 1 %}MASTER{%else%}BACKUP{%endif%}
+        interface {{ ha_lb_interface }}
+        virtual_router_id 51
+        priority {{ ha_keepalive_master_priority|int - outer_item|int  + 1 |int}}
+        authentication {
+        auth_type PASS
+        auth_pass mypass
+        }
+        virtual_ipaddress {
+            {{ ha_loadbalancer_vip }}/24
+        }
+        track_script {
+            check_apiserver
+        }
+        notify_master "/etc/keepalived/status_capture.sh MASTER"
+        notify_backup "/etc/keepalived/status_capture.sh BACKUP"
+        notify_fault  "/etc/keepalived/status_capture.sh FAULT"
+    }
+
+- path: /etc/keepalived/status_capture.sh
+  owner: root:root
+  permissions: '0755'
+  content: |
+    #!/bin/bash
+    echo "$(date): The loadbalancer instance running on $(hostname) is currently marker $1" |tee /tmp/load-balancer-status
+    chmod 755 /tmp/load-balancer-status || true
+
+- path: /etc/keepalived/check_apiserver.sh
+  owner: root:root
+  permissions: '0755'
+  content: |
+    #!/bin/sh
+
+    errorExit() {
+        echo "*** $*" 1>&2
+        exit 1
+    }
+
+    curl --silent --max-time 2 --insecure https://localhost:{{ ha_loadbalancer_port }}/ -o /dev/null || errorExit "Error GET https://localhost:{{ ha_loadbalancer_port }}/"
+    
+    if ip addr | grep -q {{ ha_loadbalancer_vip }}; then
+        curl --silent --max-time 2 --insecure https://{{ ha_loadbalancer_vip }}:{{ ha_loadbalancer_port }}/ -o /dev/null || errorExit "Error GET https://{{ ha_loadbalancer_vip }}:{{ ha_loadbalancer_port }}/"
+    fi
+
+
+- path: /etc/haproxy/haproxy.cfg
+  owner: root:root
+  permissions: '0644'
+  content: |
+    defaults
+      mode tcp
+      timeout connect 10s
+      timeout client 30s
+      timeout server 30s
+
+    frontend apiserver
+      bind *:{{ ha_loadbalancer_port }}
+      mode tcp
+      option tcplog
+      log 127.0.0.1 local0
+      default_backend apiserver
+
+    {% set count = [1] -%}
+    backend apiserver
+      option httpchk GET /healthz
+      http-check expect status 200
+      mode tcp
+      option ssl-hello-chk
+      balance     roundrobin
+      {% for controller in (controller_address.split(' ')|select()) -%}
+      {%- set ip = controller.split(',') -%}
+      server {{ master_prefix }}-{{ count|first|string }} {{ ip|last|string }}:{{ ha_lb_port }} check
+      {%- if count.append(count.pop() + 1) %}{%- endif %}
+      {% endfor %}
+
+bootcmd:
+- echo 'net.ipv4.ip_nonlocal_bind=1'|tee -a /etc/sysctl.conf
+- sysctl -p
+
+runcmd:
+- keepalived --version
+- systemctl restart keepalived
+- systemctl status keepalived
+- haproxy -v
+- systemctl restart haproxy
+- systemctl status haproxy

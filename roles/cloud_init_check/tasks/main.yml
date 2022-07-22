@@ -1,0 +1,59 @@
+---
+# tasks file for cloud_init_check
+
+  - name: "Check the VM status"
+    ansible.builtin.shell: virsh list --all |grep {{ vm_name }} |grep running
+    register: virsh_list_post_install
+    ignore_errors: yes
+    when: wait_for_cloud_init |bool
+
+  - name: "Wait for cloud-init result file to get created"
+    ansible.builtin.shell: "virt-ls -l  -d {{ vm_name }} /var/lib/cloud/data/ 2>/dev/null || :"
+    register: cloud_init_result_file
+    until: cloud_init_result_file.stdout |regex_search('result.json')
+    retries: "{{ cloud_init_result_max_retries }}"
+    delay: "{{ cloud_init_result_delay }}"
+    when: wait_for_cloud_init | bool
+
+  - name: 'Waiting for Cloud init to complete'
+    ansible.builtin.shell:  "virt-cat -d {{ vm_name }}  /var/lib/cloud/data/result.json  || :"
+    register: cloud_init_result
+    delay: "{{ cloud_init_complete_delay }}"
+    retries: "{{ cloud_init_complete_max_retries }}"
+    until: cloud_init_result.stdout_lines |length > 0 and cloud_init_result.stdout |default({})|from_json |json_query('v1.errors') |length >= 0
+    ignore_errors: yes 
+    when: wait_for_cloud_init | bool
+
+  - name: "Validate the cloud-init execution results"
+    assert:
+      that: cloud_init_result.stdout |default({})|from_json |json_query('v1.errors') |length == 0 and (virsh_list_post_install.rc == 0)
+      fail_msg: "Cloud-init execution failed at sometime, consider checking logs. error is {{ cloud_init_result.stdout }}"
+      success_msg: "Cloud-init exeution passed"
+    when: wait_for_cloud_init | bool
+
+  - name: "Capture the Current Status of the VM"
+    community.libvirt.virt:
+      command: info
+      name: "{{ vm_name }}"
+    register: vm_info
+ 
+  - name: "Grab the IP address of the VM Created"
+    ansible.builtin.shell:  "virsh domifaddr {{ vm_name }}  || :"
+    register: vm_ip
+    until: vm_ip.stdout |regex_search('[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+') 
+    retries: "{{ ip_assignment_retry }}"
+    delay: "{{ ip_assignment_delay }}"
+    ignore_errors: yes
+    when: wait_for_ip_assignment |bool
+
+  - name: "Assert that IP address is available for the vm({{vm_name}})"
+    assert:
+      that: vm_ip.stdout |regex_search('[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+')
+      fail_msg: "Unable to get the IP address of VM={{vm_name}}. Exiting"
+      success_msg: "IP Address is available for the VM={{vm_name}}"
+
+  - name: "Show VM info"
+    debug:
+      msg:
+      - "{{ vm_info |default('unavailable')}}"
+      - "{{ vm_ip.stdout|regex_search('[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+')|default({})}}"

@@ -1,0 +1,15 @@
+---
+# tasks file for error_and_help
+ - name: "Display help messages"
+   ansible.builtin.debug:
+     msg: "One or more requirements to run the playbook is failing, check the above message and ensure to use the below syntax...."
+
+ - name: "Show Syntax"
+   ansible.builtin.debug:
+     msg: >
+      "Syntax 
+       ansible-playbook automated_vm_creation.yml -e vm_name=<VM-NAME> -e vcpus=<NUMBER-OF-VPUS> -e memory_mb=<MEMORY-IN-MB-INT> -e os_variant=<OS-VARIANT> -e disk_size=<DISK-SIZE-IN-GB-WITH-G-SUFFIX> -e image_source=<IMAGE-DOWNLOAD-URL-OR-FULL-LOCAL-PATH> -e cloud_init_file=<CLOUD-INIT-FILE-OPTIONAL-BUT-YOU-SHOULD>"
+      "Optionally, you may use  wait_for_cloud_init=False to disable the cloud-init completion check for faster completion"
+
+ - meta: end_play
+

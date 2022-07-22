@@ -1,0 +1,31 @@
+#cloud-config
+
+# This file contains the default cloud-init file with basic info
+# you can modify this file as per you need. 
+
+system_info:
+  default_user:
+    name: "{{ default_username }}"                   #same user as of guest machine
+    home: "/home/{{ default_username }}"             # Same user as of guest machine
+    sudo: ALL=(ALL) NOPASSWD:ALL                     # Give sudo permission with no password prompt
+password: "{{ default_password }}"
+chpasswd: { expire: True }                           #This would cause the password to be reset during the first login
+hostname: "{{ vm_name }}"
+timezone: "{{ default_timezone }}"
+
+
+#ssh_authorized_keys:
+#- ssh-ed25519 Add your key here
+
+# configure sshd to allow users logging in using password
+# rather than just keys
+ssh_pwauth: True
+
+
+
+# list of packages to install
+package_upgrade: true
+
+# This is done to save the SSH IP into a file /tmp/my-ip
+runcmd:
+- ip addr show $(ip route get 1.1.1.1  |grep -oP 'dev\s+\K[^ ]+')  |grep -oP '^\s+inet\s+\K[^/]+' |tee /tmp/my-ip

@@ -1,0 +1,38 @@
+---
+# tasks file for ssh_key_setup
+
+  - name: "Check if the SSH key file is present at {{ auto_public_key_path }}"
+    stat:
+      path: "{{ auto_public_key_path }}"
+    register: ssh_key_path
+
+  - name: "Create the location to store SSH key at {{ auto_public_key_path }}"
+    file:
+      state: directory
+      path: "{{ auto_public_key_path }}"
+      mode: '0755'
+    when: not ssh_key_path.stat.exists
+
+    #make sure to use no force option
+  - name: "Generate an OpenSSH keypair with the default values (4096 bits, rsa)"
+    community.crypto.openssh_keypair:
+      path: "{{ auto_public_key_path }}/id_ssh_rsa"
+    when: auto_public_key_path is defined
+
+  - name: "Read the public key for setting in the cloud-init file"
+    shell: "cat {{ auto_public_key_path }}/id_ssh_rsa.pub"
+    register: public_key
+    when: auto_public_key_path is defined
+
+  - name: "Set the public key var"
+    set_fact:
+      public_key_for_all_nodes: "{{ public_key.stdout }}"
+    when: auto_public_key_path is defined
+
+  - name: "Assign permissions to {{ auto_public_key_path }}"
+    ansible.builtin.file:
+      path: "{{ auto_public_key_path }}"
+      state: directory
+      recurse: yes
+      owner: "{{ lookup('env', 'USER') }}" 
+      group: "{{ lookup('env', 'USER') }}"

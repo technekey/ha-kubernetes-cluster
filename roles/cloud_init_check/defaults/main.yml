@@ -1,0 +1,5 @@
+---
+# defaults file for cloud_init_check
+worker_address: ''
+controller_address: ''
+

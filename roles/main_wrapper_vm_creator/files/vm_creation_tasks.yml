@@ -1,0 +1,22 @@
+---
+  - name: Handle the error
+    block:
+    - name: "Perform Input parameter validation"
+      include_role:
+        name: input_validation
+
+    rescue:
+    - name: "Show help and Syntax"
+      include_role:
+        name: error_and_help
+
+  - name: "Calling VM-Creator role"
+    include_role:
+      name: vm_creator
+  - name: "Check for cloud-init completion"
+    include_role:
+      name: cloud_init_check
+  - name: "Set autostart disable for the VM"
+    include_role:
+      name: disable_autostart_vm
+

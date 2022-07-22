@@ -1,0 +1,17 @@
+---
+# defaults file for vm_creator
+network_flag: "{%- if network_to_use  == 'default' -%}
+                 --network network
+               {%- elif network_to_use == 'bridged'-%}
+                 --bridge
+               {%-else -%}
+                  'error' 
+               {%-endif-%}"
+network_value: "{%- if network_to_use  == 'default' -%}
+                 default,model=virtio
+               {%- elif network_to_use == 'bridged'-%}
+                 br0
+               {%-else -%}
+                  'error'
+               {%-endif-%}"
+

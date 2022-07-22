@@ -1,0 +1,149 @@
+---
+# tasks file for vm_creator
+
+  - name: "Set the public key var"
+    set_fact:
+      public_key_for_all_nodes: "{{ public_key.stdout }}"  
+    when: auto_public_key_path is defined
+  
+  - name: "Create a temp cloud-init file if user did not provide cloud-init file"
+    tempfile:
+      state:  file
+      suffix: config
+    register: temp_config
+    when: cloud_init_file is not defined
+
+  - name: "Create a template to add the VM-NAME({{vm_name}}) to the temp cloud-init file"
+    copy:
+      content: "{{ lookup('template', template_file) }}"
+      dest:    "{{ temp_config.path }}"
+    when: cloud_init_file is not defined
+
+  - name: "Create the required directory"
+    file:
+      state: directory
+      path: "{{ item }}"
+      mode: '0755'
+    loop: "{{ required_directories }}"
+
+  - name: "Determine if this is a local(file already present) or network download"
+    stat:
+      path: "{{ image_cache }}/{{ os_variant }}"
+      checksum_algorithm: sha1
+    register: stat_result
+
+  - name: "Determine the valid list of OS-Variants"
+    ansible.builtin.shell: virt-install --osinfo list |grep -q "{{ os_variant }}"
+    ignore_errors: true
+    register: variant_list
+
+  - name: assert the os-variant
+    assert:
+      that: variant_list.rc == 0
+      fail_msg: "Invalid OS-Variant provided, run 'virt-install --osinfo list' to get the list of variants"
+      success_msg: "OS Variant assertion passed"
+
+  - name: "Download the Image from {{ image_source }},if no way to checksum the source"
+    ansible.builtin.get_url:
+      url: "{{ image_source }}"
+      dest: "{{ image_cache }}/{{ os_variant }}"
+      mode: '0755'
+    register: image_download_stats_non_checksumed
+    when: not (stat_result.stat.exists|bool)
+
+  - name: "Download the Image from {{ image_source }}, if the checksum is possible"
+    ansible.builtin.get_url:
+      url: "{{ image_source }}"
+      dest: "{{ image_cache }}/{{ os_variant }}"
+      mode: '0755'
+      checksum: "sha1{{':'}}{{ stat_result.stat.checksum|default('') }}"
+    register: image_download_stats_checksumed
+    when: (stat_result.stat.exists |bool)
+
+  - name: "Validate the downloaded file is present"
+    assert:
+      that: "{%- if image_download_stats_checksumed is defined -%}
+                 {%- if image_download_stats_checksumed.msg is defined -%}
+                     {%- if image_download_stats_checksumed.msg|regex_search('^file already exists$') -%}
+                         {{ true|bool }}
+                     {%-else-%}
+                         {{ false|bool}}
+                     {%-endif-%}
+                 {%-endif-%}
+             {%- elif image_download_stats_non_checksumed is defined -%}
+                 {%- if image_download_stats_non_checksumed.msg is defined -%}
+                     {%- if image_download_stats_not_checksumed.msg|regex_search('^OK') -%}
+                         {{ true|bool }}
+                     {%-else-%}
+                         {{ false |bool }}
+                     {%-endif-%}
+                 {%-endif-%}
+             {%-else-%}
+                 {{ false|bool }}
+             {%-endif-%}"
+      fail_msg: "Image download failed from {{ image_source }}"
+      success_msg: "Image download is successful or image with the same cksum is already present at {{ image_cache }}"
+
+  - name: Store the downloaded image file name
+    set_fact:
+      image_name: "{%- if stat_result.stat.exists |bool -%} {{ image_download_stats_checksumed.dest|basename }} {%- else -%} {{ image_download_stats_non_checksumed.dest|basename}}{%-endif-%}"
+
+  - name: "Get the format of the downloaded image"
+    ansible.builtin.shell : qemu-img info "{{ image_cache }}/{{ image_name }}"
+    register: qemu_image_stats
+
+  - name: "Get the format of the downloaded image"
+    set_fact:
+      downloaded_image_format: "{{ qemu_image_stats.stdout_lines |regex_search('file format. ([0-9a-zA-Z]+)','\\1') | first}}"
+
+  - name: Convert the image to qcow
+    ansible.builtin.shell: "qemu-img convert  -f {{ downloaded_image_format }}  -O qcow2 {{ image_cache }}/{{image_name}} {{ vm_disk_storage }}/{{ vm_name }}/{{vm_name }}.qcow2"
+    register: image_convertion_stats
+
+  - name: "Resize the disk"
+    ansible.builtin.shell: "qemu-img resize {{ vm_disk_storage }}/{{ vm_name }}/{{ vm_name }}.qcow2 {{ disk_size }}"
+
+  - name: "Create a seed image"
+    ansible.builtin.shell: "cloud-localds -v {{ vm_disk_storage }}/{{vm_name}}/{{vm_name }}_seed.iso  {{  temp_config.path}}"
+
+  - name: "Cleanup the Default cloud-init file"
+    ansible.builtin.file:
+      path: "{{ temp_config.path }}"
+      state: absent
+    when:  temp_config.path is defined
+
+  - name: "Do the install for Default network"
+    ansible.builtin.shell: >
+      virt-install   --name "{{ vm_name }}"
+      --disk "{{ vm_disk_storage }}/{{ vm_name }}/{{ vm_name }}.qcow2",device=disk,bus=virtio
+      --disk "{{ vm_disk_storage }}/{{vm_name}}/{{vm_name }}_seed.iso",device=cdrom
+      --os-variant "{{ os_variant }}"
+      --virt-type kvm
+      --graphics none
+      --vcpus "{{vcpus}}"
+      --memory "{{ memory_mb }}"
+      --console pty,target_type=serial
+      --network network=default,model=virtio
+      --import
+      --noautoconsole
+    register: virt_install_output
+    ignore_errors: true
+    when: network_to_use == "default"
+
+  - name: "Do the install for bridged network, experimental"
+    ansible.builtin.shell: >
+      virt-install   --name "{{ vm_name }}"
+      --disk "{{ vm_disk_storage }}/{{ vm_name }}/{{ vm_name }}.qcow2",device=disk,bus=virtio
+      --disk "{{ vm_disk_storage }}/{{vm_name}}/{{vm_name }}_seed.iso",device=cdrom
+      --os-variant "{{ os_variant }}"
+      --virt-type kvm
+      --graphics none
+      --vcpus "{{vcpus}}"
+      --memory "{{ memory_mb }}"
+      --console pty,target_type=serial
+      --bridge=br0
+      --import
+      --noautoconsole
+    register: virt_install_output
+    ignore_errors: true
+    when: network_to_use == "bridged"
