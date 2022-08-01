@@ -1,13 +1,20 @@
 ---
 # tasks file for input_validation
-  - name: "Ensure the dependencies are present on the host"
-    package:
-      name:
-        - guestfs-tools
-        - python3-libvirt
-      state: present
 
-  - name: validate some variables
+  - name: "Install the dependencies on the host"
+    package:
+      name: "{{ item }}"
+      state: present
+    loop:
+    - python3-libvirt
+    - libvirt-clients
+    - virtinst
+    - guestfs-tools
+    - qemu-utils
+    - qemu-kvm
+    - cloud-image-utils
+
+  - name: "Validate the minimum required hostvars configuration"
     fail:
       msg: "Required variable {{item}} has not been provided"
     when: vars[item] is undefined
