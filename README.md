@@ -12,7 +12,7 @@ All the default configuration are present in the hostvar file and the user may n
 - two load balancers(with keepalived and haproxy configured)
 ````
 
-The configuration of load balancers can be disabled by setting ````ha_enabled: false```` in the hostvar file. Also, note that if ````ha_enabled: true` is set, then user must provide one spare IP in their libvert's default network to be set as load balancer's Virtual/floating IP. 
+The configuration of load balancers can be disabled by setting ````ha_enabled: false```` in the hostvar file. Also, note that if ````ha_enabled: true```` is set, then user must provide one spare IP in their libvert's default network to be set as load balancer's Virtual/floating IP. 
 
 ##### The following are the required packages for the playbook to work, the playbook will automatically install these packages. (tested for Ubuntu22 host)
 
