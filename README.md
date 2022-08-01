@@ -14,16 +14,17 @@ All the default configuration are present in the hostvar file and the user may n
 
 The configuration of load balancers can be disabled by setting ````ha_enabled: false```` in the hostvar file. Also, note that if ````ha_enabled: true` is set, then user must provide one spare IP in their libvert's default network to be set as load balancer's Virtual/floating IP. 
 
-##### The prerequisites that the playbook requires for the execution are:
+##### The following are the required packages for the playbook to work, the playbook will automatically install these packages. (tested for Ubuntu22 host)
 
 ````
-- virt-install
-- ansible-playbook
-- virsh
-- virt-ls
-- virt-cat
-- qemu-img
-- cloud-localds
+    - python3-libvirt
+    - libvirt-clients
+    - virtinst
+    - guestfs-tools
+    - qemu-utils
+    - qemu-kvm
+    - cloud-image-utils
+
 ````
 
 ##### The following ansible collections are also needed:
