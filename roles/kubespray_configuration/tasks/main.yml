@@ -76,9 +76,10 @@
   - name: "Enable Audit logs"
     ansible.builtin.lineinfile:
       path: "{{ kubespray_dir }}/inventory/{{ cluster_name }}/group_vars/k8s_cluster/k8s-cluster.yml"
-      regexp: '^(# +)(kubernetes_audit{{":"}})(.*)$'
-      line:  \g<2> true
+      regexp: '^.*?(kubernetes_audit{{":"}})(.*)$'
+      line:  \g<1> true
       backrefs: yes
+
 
   - name: "Enable Kubernetes Dashboard"
     ansible.builtin.lineinfile:
