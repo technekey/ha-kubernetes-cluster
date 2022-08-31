@@ -13,7 +13,7 @@
       image_source: "{{ worker_image_source }}"
       vm_name:      "{{ prefix + '-' + outer_item }}"
       node_type:    "worker"
-    loop: "{{ query('sequence', 'start=1 end=' + (number_of_worker|string)) }}"
+    loop: "{{ query('sequence', 'start=1 end=' + (number_of_worker|string if number_of_worker|int > 0 else 1|string)) }}"
     loop_control:
       loop_var: outer_item
 
