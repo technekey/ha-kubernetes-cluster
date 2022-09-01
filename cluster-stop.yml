@@ -2,30 +2,19 @@
   hosts: localhost
   gather_facts: yes
   become: yes
-  vars_prompt:
-  - name: "user_response_cluster_stop"
-    prompt: "Do you want to stop the cluster (yes/no)?"
-    private: no
-
   tasks:
-  - name: "Validate User response"
-    assert:
-      that:
-      - user_response_cluster_stop is defined
-      - user_response_cluster_stop|regex_search('(?i)^yes$|^no$')
-
-      fail_msg: "Invalid User response, you must type 'yes' or 'no'"
-      success_msg: "User response validation passed"
-
-  - meta: end_play
-    when: user_response_cluster_stop | regex_search('^no$')
-
   - name: "Validating Cluster name is provided"
     assert: 
       that: cluster_to_stop is defined
       fail_msg: "You must set 'cluster_to_stop' as input via extra-args to the name of the cluster marked for stop."
       success_msg: "Cluster name is provided, validation passed"
-  
+ 
+  - name: "Prompt for user response"
+    user_prompt:
+      prompt: "Do you want to continue to stop the cluster({{ cluster_to_stop }}) with the values defined in {{ playbook_dir }}/host_vars/localhost/defaults.yml?"
+      passing_response: ['y','Y','yes','YES']
+      abort_response: ['n','n','no','NO']
+ 
   - name: "List the Existing KVM present on the host machine"
     community.libvirt.virt:
       command: list_vms

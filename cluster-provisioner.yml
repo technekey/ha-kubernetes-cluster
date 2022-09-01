@@ -3,6 +3,12 @@
   gather_facts: yes
   become: yes   
   tasks:
+  - name: "Prompt for user response"
+    user_prompt:
+      prompt: "Do you want to continue the cluster creation with the values defined in {{ playbook_dir }}/host_vars/localhost/defaults.yml?"
+      passing_response: ['y','Y','yes','YES']
+      abort_response: ['n','n','no','NO']
+
   - name: "Validate the hostvars"
     block:
     - name: "Perform Input parameter validation"

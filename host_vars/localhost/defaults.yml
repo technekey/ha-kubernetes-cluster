@@ -20,7 +20,7 @@ number_of_master: 2
 master_prefix: "kube-controller"
 master_memory: "2048"
 master_vcpu: 2
-master_disk: 40G
+master_disk: 80G
 master_os_variant: ubuntu22.04
 master_image_source: https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
 
@@ -33,7 +33,7 @@ number_of_worker: 3
 worker_prefix: "kube-worker"
 worker_memory: "2048"
 worker_vcpu: 2
-worker_disk: 40G
+worker_disk: 120G
 worker_os_variant: ubuntu22.04
 worker_image_source: https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
 
@@ -92,7 +92,7 @@ auto_public_key_path: "{{ playbook_dir }}/{{ cluster_name }}"
 image_cache: "/var/lib/vm_images"
 
 # Keep the disk of the VM at the following location, note that if the directory is deleted VM will be lost.
-vm_disk_storage: "/var/lib/libvert_vm"
+vm_disk_storage: "/media/technekey/New Volume/virtlib"
 
 
 ##############################################################################################################

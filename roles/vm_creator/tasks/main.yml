@@ -97,7 +97,7 @@
       downloaded_image_format: "{{ qemu_image_stats.stdout_lines |regex_search('file format. ([0-9a-zA-Z]+)','\\1') | first}}"
 
   - name: Convert the image to qcow
-    ansible.builtin.shell: "qemu-img convert  -f {{ downloaded_image_format }}  -O qcow2 {{ image_cache }}/{{image_name}} {{ vm_disk_storage }}/{{ vm_name }}/{{vm_name }}.qcow2"
+    ansible.builtin.shell: "qemu-img convert  -f {{ downloaded_image_format }}  -O qcow2 {{ image_cache }}/{{image_name}} {{ vm_disk_storage|regex_escape() }}/{{ vm_name }}/{{vm_name }}.qcow2"
     register: image_convertion_stats
 
   - name: "Resize the disk"
