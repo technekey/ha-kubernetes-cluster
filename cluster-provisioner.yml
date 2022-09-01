@@ -14,7 +14,7 @@
       include_role:
         name: error_and_help
 
-  - name: "sss"
+  - name: "SSH key validation and setup"
     include_role:
       name: ssh_key_setup
     when: auto_public_key_path is defined
