@@ -23,7 +23,7 @@ master_vcpu: 2
 master_disk: 80G
 master_os_variant: ubuntu22.04
 master_image_source: https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
-
+master_install_tools: []
 ###########################################################################################################
 ##
 ## Configuration for KUBE WORKER NODE
@@ -36,7 +36,7 @@ worker_vcpu: 2
 worker_disk: 120G
 worker_os_variant: ubuntu22.04
 worker_image_source: https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
-
+worker_install_tools: []
 
 ###########################################################################################################
 ##
@@ -50,7 +50,9 @@ loadbalancer_vcpu: 1
 loadbalancer_disk: 40G
 loadbalancer_os_variant: ubuntu22.04
 loadbalancer_image_source: https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
-
+loadbalancer_install_tools:
+- haproxy
+- keepalived
 ###########################################################################################################
 ##
 ## Configuration for HA

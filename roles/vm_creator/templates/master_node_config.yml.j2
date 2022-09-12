@@ -25,3 +25,10 @@ ssh_pwauth: True
 
 # list of packages to install
 package_upgrade: true
+# packages to install on master node {{ master_install_tools|default([]) }}
+{% if master_install_tools is defined  and master_install_tools |length > 0 %}
+packages:
+{%- for tool in master_install_tools |select() %}
+- {{ tool }}
+{%- endfor %}
+{% endif %}

@@ -25,9 +25,13 @@ ssh_pwauth: True
 
 # list of packages to install
 package_upgrade: true
+# the list of packages to install is {{ loadbalancer_install_tools|default([]) }}
+{% if loadbalancer_install_tools is defined and loadbalancer_install_tools|length > 0 %}
 packages:
-- keepalived
-- haproxy
+{%- for tool in loadbalancer_install_tools |select() %}
+- {{ tool }}
+{%- endfor%}
+{% endif %}
 
 write_files:
 - path: /etc/keepalived/keepalived.conf
