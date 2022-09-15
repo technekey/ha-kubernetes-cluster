@@ -45,15 +45,15 @@
   - name: "Check High-Availibility Configuration for Number of Masters"
     assert:
       that: 
-      - number_of_master >= 2
+      - number_of_master|int >= 2
       fail_msg: "Invalid Configuration, 'ha_enable' is set to True, then number_of_master must be higher that 2"
       success_msg: "Number of Masters are satisfying the HA settings"
-    when: ha_enable
+    when: ha_enable| bool
 
   - name: "Check High-Availibility Configuration for Number of Loadbalancers"
     assert:
       that:
-      - number_of_loadbalancer >= 2
+      - number_of_loadbalancer|int >= 2
       fail_msg: "Invalid Configuration,  'ha_enable' is set to True, then number_of_loadbalancer must be higher that 2"
       success_msg: "Number of Loadbalancers are satisfying the HA settings"
 
