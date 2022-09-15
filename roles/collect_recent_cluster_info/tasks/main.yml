@@ -13,9 +13,9 @@
   - name: "Save the Hostname and IP of the exiting nodes in the cluster"
     set_fact: 
       all_nodes_running: "{%for item in  ip_host_map.results|list | map(attribute='stdout') |select() %}{{ item }} {%endfor%}"
-      controller_address: "{% for item in  ip_host_map.results|list | map(attribute='stdout') |select('match','.*' + master_prefix + '.*')%}{{item}} {%endfor%}"
-      worker_address: "{% for item in ip_host_map.results|list | map(attribute='stdout') |select('match','.*' + worker_prefix + '.*')%}{{item}} {%endfor%}"
-      loadbalancer_address: "{% for item in  ip_host_map.results|list | map(attribute='stdout') |select('match','.*' + loadbalancer_prefix + '.*')%}{{item}} {%endfor%}"
+      controller_address: "{% for item in  ip_host_map.results|list | map(attribute='stdout') |select('match', cluster_name + '.*' + master_prefix + '.*')%}{{item}} {%endfor%}"
+      worker_address: "{% for item in ip_host_map.results|list | map(attribute='stdout') |select('match', cluster_name + '.*' + worker_prefix + '.*')%}{{item}} {%endfor%}"
+      loadbalancer_address: "{% for item in  ip_host_map.results|list | map(attribute='stdout') |select('match', cluster_name + '.*' + loadbalancer_prefix + '.*')%}{{item}} {%endfor%}"
 
   - debug: var=all_nodes_running
   - debug: var=controller_address
