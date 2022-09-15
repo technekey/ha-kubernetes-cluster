@@ -13,7 +13,7 @@
       image_source: "{{ master_image_source }}"
       vm_name:      "{{ prefix + '-' + outer_item }}"
       node_type:    "master"
-    loop: "{{ query('sequence', 'start=1 end=' + (number_of_master|string)) }}"
+    loop: "{{  query('sequence', 'start=1 end=' + (number_of_master|string)) if number_of_master|int > 0 else [] }}"
     loop_control:
       loop_var: outer_item
 
