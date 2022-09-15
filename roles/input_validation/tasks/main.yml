@@ -60,7 +60,7 @@
   - name: "Check the number of ETCD Nodes for ODD Numbers"
     debug:
       msg: >
-          "{% if number_of_master %2 == 0 %}
+          "{% if number_of_master|int %2 == 0 %}
              [WARNING] The number of masters is in even numbers, ETCD must be installed on odd numbers of nodes,
              ETCD will be additionally configured on 1 worker node to keep the ETCD node to Odd numbers.
            {% else %}
