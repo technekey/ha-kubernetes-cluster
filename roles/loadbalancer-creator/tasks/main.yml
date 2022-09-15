@@ -18,7 +18,7 @@
       image_source: "{{ loadbalancer_image_source }}"
       vm_name:      "{{ prefix + '-' + outer_item }}"
       node_type:    "loadbalancer"
-    loop: "{{ query('sequence', 'start=1 end=' + (number_of_loadbalancer|string)) }}"
+    loop: "{{  query('sequence', 'start=1 end=' + (number_of_loadbalancer|string)) if number_of_loadbalancer|int > 0 else [] }}"
     loop_control:
       loop_var: outer_item
     when: ha_enable |bool
