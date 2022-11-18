@@ -8,6 +8,7 @@
       that: cluster_to_stop is defined
       fail_msg: "You must set 'cluster_to_stop' as input via extra-args to the name of the cluster marked for stop."
       success_msg: "Cluster name is provided, validation passed"
+    when: user_conformation|default(True)
  
   - name: "Prompt for user response"
     user_prompt:

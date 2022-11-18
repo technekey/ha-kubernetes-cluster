@@ -14,6 +14,7 @@
       prompt: "Do you want to continue to start cluster={{ cluster_to_start }}, with the values defined in {{ playbook_dir }}/host_vars/localhost/defaults.yml?"
       passing_response: ['y','Y','yes','YES']
       abort_response: ['n','n','no','NO']
+    when: user_conformation|default(True)
 
   - name: "List the Existing KVM present on the host machine"
     community.libvirt.virt:

@@ -8,6 +8,7 @@
       prompt: "Do you want to continue the cluster creation with the values defined in {{ playbook_dir }}/host_vars/localhost/defaults.yml?"
       passing_response: ['y','Y','yes','YES']
       abort_response: ['n','n','no','NO']
+    when: user_conformation|default(True)
 
   - name: "Validate the hostvars"
     block:

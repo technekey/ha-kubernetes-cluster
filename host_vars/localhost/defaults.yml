@@ -139,6 +139,10 @@ log_ip: False
 ip_dir: "{{ playbook_dir }}/ip"
 
 
+
+
+# enable user prompt before proceeding 
+user_conformation: True
 ######################################################################################################################
 ##
 ## Configuration for kubespray
