@@ -1,0 +1,8 @@
+all:
+  children:
+    localhosts:
+      hosts:
+        localhost:
+          ansible_host: localhost
+          ansible_connection: local
+    ungrouped: {}
