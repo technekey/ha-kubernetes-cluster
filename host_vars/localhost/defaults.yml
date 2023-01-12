@@ -22,6 +22,10 @@ master_memory: "2048"
 master_vcpu: 2
 master_disk: 80G
 master_os_variant: ubuntu22.04
+#If you need fedora images, get them from https://download.fedoraproject.org/pub/fedora/linux/releases/
+# make sure you use cloud image that supports cloud-init.
+
+
 master_image_source: https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
 master_install_tools: []
 ###########################################################################################################
