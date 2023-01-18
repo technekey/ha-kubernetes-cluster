@@ -27,7 +27,8 @@ master_os_variant: ubuntu22.04
 
 
 master_image_source: https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
-master_install_tools: []
+master_install_tools:
+- qemu-guest-agent
 ###########################################################################################################
 ##
 ## Configuration for KUBE WORKER NODE
@@ -40,7 +41,8 @@ worker_vcpu: 2
 worker_disk: 120G
 worker_os_variant: ubuntu22.04
 worker_image_source: https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
-worker_install_tools: []
+worker_install_tools:
+- qemu-guest-agent # Remove this if you wish not to control the guest VM from host machine
 
 ###########################################################################################################
 ##
@@ -57,6 +59,7 @@ loadbalancer_image_source: https://cloud-images.ubuntu.com/jammy/current/jammy-s
 loadbalancer_install_tools:
 - haproxy
 - keepalived
+- qemu-guest-agent
 ###########################################################################################################
 ##
 ## Configuration for HA
