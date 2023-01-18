@@ -28,7 +28,16 @@ package_upgrade: true
 # packages to install on master node {{ master_install_tools|default([]) }}
 {% if master_install_tools is defined  and master_install_tools |length > 0 %}
 packages:
-{%- for tool in master_install_tools |select() %}
+{% for tool in master_install_tools |select() %}
 - {{ tool }}
-{%- endfor %}
+{% endfor %}
 {% endif %}
+
+
+{% if master_run_commands is defined and master_run_commands|length > 0 %}
+runcmd:
+{% for command in master_run_commands |select() %}
+- {{ command }}
+{% endfor%}
+{% endif %}
+

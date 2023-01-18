@@ -28,9 +28,9 @@ package_upgrade: true
 # the list of packages to install is {{ loadbalancer_install_tools|default([]) }}
 {% if loadbalancer_install_tools is defined and loadbalancer_install_tools|length > 0 %}
 packages:
-{%- for tool in loadbalancer_install_tools |select() %}
+{% for tool in loadbalancer_install_tools |select() %}
 - {{ tool }}
-{%- endfor%}
+{% endfor%}
 {% endif %}
 
 write_files:
@@ -131,10 +131,11 @@ bootcmd:
 - echo 'net.ipv4.ip_nonlocal_bind=1'|tee -a /etc/sysctl.conf
 - sysctl -p
 
+
+{% if loadbalancer_run_commands is defined and loadbalancer_run_commands|length > 0 %}
 runcmd:
-- keepalived --version
-- systemctl restart keepalived
-- systemctl status keepalived
-- haproxy -v
-- systemctl restart haproxy
-- systemctl status haproxy
+{% for command in loadbalancer_run_commands |select() %}
+- {{ command }}
+{% endfor%}
+{% endif %}
+
