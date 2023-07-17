@@ -7,6 +7,7 @@
       state: present
     loop:
     - python3-libvirt
+    - python3-pip
     - libvirt-clients
     - virtinst
     - guestfs-tools
@@ -42,6 +43,17 @@
       - not ((auto_public_key_path is defined) and (public_key_for_all_nodes is defined))
       - ((auto_public_key_path is defined) or (public_key_for_all_nodes is defined)) 
     loop: "{{ conditions }}"
+
+  - name: "Sets default ACL for libvirt-qemu for {{ vm_disk_storage }}"
+    ansible.posix.acl:
+      path: "{{ vm_disk_storage }}"
+      entity: libvirt-qemu
+      etype: user
+      permissions: rx
+      default: true
+      state: present
+    when: vm_disk_storage != "/var/lib/libvirt/images"
+
   - name: "Check High-Availibility Configuration for Number of Masters"
     assert:
       that: 

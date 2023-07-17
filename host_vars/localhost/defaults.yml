@@ -123,10 +123,10 @@ auto_public_key_path: "{{ playbook_dir }}/{{ cluster_name }}"
 ##############################################################################################################
 
 # we will download images at the following location, use the directory with enough disk space
-image_cache: "/var/lib/vm_images"
+image_cache: "/var/vm_images"
 
 # Keep the disk of the VM at the following location, note that if the directory is deleted VM will be lost.
-vm_disk_storage: "/media/technekey/New Volume/virtlib"
+vm_disk_storage: "/var/lib/libvirt/images"
 
 
 ##############################################################################################################

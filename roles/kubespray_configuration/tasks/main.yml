@@ -110,4 +110,4 @@
 
   - name: "Print the kubespray command"
     debug:
-      msg: "ansible-playbook -i {{ cluster_name }}/kubespray/inventory/{{ cluster_name }}/hosts.yaml --become --become-user=root {{ cluster_name }}/kubespray/cluster.yml -u {{ default_username }}  --private-key {{ cluster_name }}/id_ssh_rsa"
+      msg: "cd {{ cluster_name }}/kubespray; ansible-playbook -i inventory/{{ cluster_name }}/hosts.yaml --become --become-user=root cluster.yml -u {{ default_username }}  --private-key ../id_ssh_rsa"
