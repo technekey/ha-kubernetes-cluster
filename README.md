@@ -18,6 +18,7 @@ The configuration of load balancers can be disabled by setting ````ha_enabled: f
 
 ````
     - python3-libvirt
+    - python3-pip
     - libvirt-clients
     - virtinst
     - guestfs-tools
