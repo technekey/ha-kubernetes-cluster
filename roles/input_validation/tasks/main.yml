@@ -1,6 +1,5 @@
 ---
 # tasks file for input_validation
-
   - name: "Install the dependencies on the host"
     package:
       name: "{{ item }}"
@@ -14,6 +13,10 @@
     - qemu-utils
     - qemu-kvm
     - cloud-image-utils
+
+  - name: Check for active virtual environment
+    check_virtual_env:
+      allow_virtual_env: "{{ local_virtual_env_allowed }}"  # Set to true to allow virtual environments
 
   - name: "Validate the minimum required hostvars configuration"
     fail:

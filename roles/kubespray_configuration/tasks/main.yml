@@ -28,12 +28,10 @@
       force: yes
     become: false
 
-# The requirements for kubespray will get installed in venv. Then later, user must activate the venv
-# before calling the part-2(kubespray).
-  - name: "Install specified python requirements for kubespray, using virtual env={{ kubespray_dir }}/venv"
+  - name: "Install specified python requirements for kubespray, using virtual env={{ kubespray_dir }}/{{ remote_virtual_env_dir }}"
     ansible.builtin.pip:
       requirements: "{{ kubespray_dir }}/requirements.txt"
-      virtualenv: "{{ kubespray_dir }}/venv"
+      virtualenv: "{{ kubespray_dir }}/{{ remote_virtual_env_dir }}"
     delegate_to: localhost
     connection: local
 
@@ -112,7 +110,3 @@
       path: "{{ kubespray_dir }}/inventory/{{ cluster_name }}/group_vars/k8s_cluster/addons.yml"
       regexp: '^(# )(metrics_server.*)'
       replace: '\2'
-
-  - name: "Print the kubespray command"
-    debug:
-      msg: "cd {{ cluster_name }}/kubespray; ansible-playbook -i inventory/{{ cluster_name }}/hosts.yaml --become --become-user=root cluster.yml -u {{ default_username }}  --private-key ../id_ssh_rsa"

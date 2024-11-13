@@ -216,3 +216,9 @@ required_binaries:
 - qemu-img
 - cloud-localds
 
+
+##########################################################################################################
+#Virtual env directory name, changing this may require some awareness about activating the env
+##########################################################################################################
+local_virtual_env_dir: "{{ playbook_dir }}/{{ cluster_name }}"
+local_virtual_env_allowed: false
