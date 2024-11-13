@@ -19,6 +19,7 @@ The configuration of load balancers can be disabled by setting ````ha_enabled: f
 ````
     - python3-libvirt
     - python3-pip
+    - python3-venv  #this is added due to PEP 668 restrictions. 
     - libvirt-clients
     - virtinst
     - guestfs-tools
@@ -42,6 +43,7 @@ For example, the name of the cluster is **'developement'**: (Optionally tweak th
 ansible-playbook cluster-provisioner.yml -e cluster_name=development
 #if you want to configure kubespray addons and configuration, this is the time
 cd development/kubespray
+source ./venv/bin/activate   #this is needed for pip requirements on local node.
 ansible-playbook -i inventory/development/hosts.yaml --become --become-user=root cluster.yml -u technekey  --private-key ../id_ssh_rsa
 ````
 Read about kubespray advanced configuration [here.](https://technekey.com/kubespray-advanced-configuration-for-a-production-cluster/) 
@@ -122,4 +124,4 @@ virsh list --all
 ````
 
 
-#### NOTE: The playbooks are developed and tested on ````Ubuntu22.04```` with ubuntu22.04 cloud images for kubernetes guest hosts. The behaviour on other host OS may differ. 
+#### NOTE: The playbooks are developed and tested on ````Ubuntu22.04 and ubuntu24.04```` with ubuntu22.04 cloud images for kubernetes guest hosts. The behaviour on other host OS may differ. 
