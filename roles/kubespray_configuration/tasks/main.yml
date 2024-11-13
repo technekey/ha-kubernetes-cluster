@@ -28,9 +28,14 @@
       force: yes
     become: false
 
-  - name: "Install specified python requirements for kubespray"
+# The requirements for kubespray will get installed in venv. Then later, user must activate the venv
+# before calling the part-2(kubespray).
+  - name: "Install specified python requirements for kubespray, using virtual env={{ kubespray_dir }}/venv"
     ansible.builtin.pip:
       requirements: "{{ kubespray_dir }}/requirements.txt"
+      virtualenv: "{{ kubespray_dir }}/venv"
+    delegate_to: localhost
+    connection: local
 
   - name: "Copy the inventory template"
     shell: "cp -rfp {{ kubespray_dir }}/inventory/sample {{ kubespray_dir }}/inventory/{{ cluster_name }}"
