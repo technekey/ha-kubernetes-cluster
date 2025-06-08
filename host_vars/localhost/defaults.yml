@@ -204,7 +204,7 @@ required_parameters:
 - vcpus
 - memory_mb
 - disk_size
-- image_soruce
+- image_source
 #note: supplying cloud-init file is optional, the playbook would rander it's own file
 
 #following binaries are required on the controller machine
