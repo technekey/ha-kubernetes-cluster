@@ -72,7 +72,7 @@
                  {%-endif-%}
              {%- elif image_download_stats_non_checksumed is defined -%}
                  {%- if image_download_stats_non_checksumed.msg is defined -%}
-                     {%- if image_download_stats_not_checksumed.msg|regex_search('^OK') -%}
+                    {%- if image_download_stats_non_checksumed.msg|regex_search('^OK') -%}
                          {{ true|bool }}
                      {%-else-%}
                          {{ false |bool }}
